@@ -86,18 +86,20 @@ class MenuScene(Scene):
     # ---------- 人机难度选择 ----------
     def _build_pve_overlay(self) -> None:
         self._pve_color = RED
-        ox, oy, ow, oh = theme.WIDTH // 2 - 250, 120, 500, 480
+        # 弹窗加高并留足间距：5 个难度按钮 + 先手选择 + 提示 + 返回，互不遮挡
+        ox, oy, ow, oh = theme.WIDTH // 2 - 250, 70, 500, 580
         self._overlay_rect = pygame.Rect(ox, oy, ow, oh)
         w = self.overlay_widgets
         for i, (name, *_rest) in enumerate(DIFFICULTIES):
-            y = oy + 90 + i * 58
-            w.append(Button((ox + 60, y, ow - 120, 48), f"{name}（第{i+1}级）",
+            y = oy + 78 + i * 56          # 5 个按钮：末个底部 = oy+78+4*56+46 = oy+348
+            w.append(Button((ox + 60, y, ow - 120, 46), f"{name}（第{i+1}级）",
                             lambda i=i: self._start_pve(i), font_size=23))
+        # 先手选择（在难度按钮下方，提示文字上方）
         w.append(Button((ox + 60, oy + oh - 130, 180, 46), "执红先行",
                         lambda: self._set_pve_color(RED), font_size=20, color=theme.RED_PIECE))
         w.append(Button((ox + ow - 240, oy + oh - 130, 180, 46), "执黑后行",
                         lambda: self._set_pve_color(BLACK), font_size=20, color=theme.BLACK_PIECE))
-        w.append(Button((ox + ow // 2 - 70, oy + oh - 66, 140, 44), "返回",
+        w.append(Button((ox + ow // 2 - 70, oy + oh - 64, 140, 44), "返回",
                         self._close_overlay, font_size=20, color=(150, 120, 90)))
 
     def _set_pve_color(self, color: str) -> None:
@@ -233,7 +235,7 @@ class MenuScene(Scene):
         if self.overlay == "pve":
             hint = f"当前选择：{'执红先行' if self._pve_color == RED else '执黑后行'}"
             h = theme.get_font(20).render(hint, True, theme.RED_PIECE if self._pve_color == RED else theme.BLACK_PIECE)
-            surf.blit(h, h.get_rect(center=(r.centerx, r.bottom - 150)))
+            surf.blit(h, h.get_rect(center=(r.centerx, r.bottom - 175)))
         elif self.overlay == "puzzle" and self._puzzles:
             pass
         for w in self.overlay_widgets:
