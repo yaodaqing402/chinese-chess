@@ -1,6 +1,6 @@
 [project]
 name = "chinese-chess"
-version = "1.0.0"
+version = "1.0.1"
 description = "中国象棋 · 少儿版 —— 适合小朋友的中国象棋游戏（人机 / 双人 / 局域网 / 教学残局）"
 readme = "README.md"
 requires-python = ">=3.10"

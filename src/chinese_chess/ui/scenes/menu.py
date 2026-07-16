@@ -223,9 +223,7 @@ class MenuScene(Scene):
         surf.blit(theme.get_font(18).render(rec, True, theme.TEXT_DIM), (card.x + 24, card.y + 154))
 
     def _draw_overlay(self, surf: pygame.Surface) -> None:
-        veil = pygame.Surface((theme.WIDTH, theme.HEIGHT), pygame.SRCALPHA)
-        veil.fill((0, 0, 0, 130))
-        surf.blit(veil, (0, 0))
+        theme.draw_veil(surf, 130)
         r = self._overlay_rect
         pygame.draw.rect(surf, theme.PANEL_BG, r, border_radius=18)
         pygame.draw.rect(surf, theme.GOLD, r, width=3, border_radius=18)

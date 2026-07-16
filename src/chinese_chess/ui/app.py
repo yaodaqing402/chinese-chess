@@ -32,13 +32,23 @@ class Scene:
 
 class App:
     def __init__(self):
+        # 让缩放采用线性过滤，全屏/放大时更平滑清晰
+        os.environ.setdefault("SDL_RENDER_SCALE_QUALITY", "1")
         pygame.init()
         try:
             pygame.mixer.pre_init(44100, -16, 2, 512)
         except pygame.error:
             pass
         self.settings = load_settings()
-        self.screen = pygame.display.set_mode((theme.WIDTH, theme.HEIGHT))
+        # SCALED：按逻辑分辨率渲染后等比例缩放到窗口/全屏（含高分屏 Retina 全量后备缓冲），
+        # 不拉伸变形，自动加黑边；RESIZABLE：允许自由缩放窗口。鼠标坐标由 pygame 自动换算。
+        self._flags = pygame.SCALED | pygame.RESIZABLE
+        self.fullscreen = False
+        try:
+            self.screen = pygame.display.set_mode((theme.WIDTH, theme.HEIGHT), self._flags, vsync=1)
+        except pygame.error:
+            # 无显示环境（如 CI 的 dummy 驱动）退化为普通窗口
+            self.screen = pygame.display.set_mode((theme.WIDTH, theme.HEIGHT))
         pygame.display.set_caption("中国象棋 · 少儿版")
         self.clock = pygame.time.Clock()
         self.sound = SoundManager(enabled=self.settings.get("sound", True))
@@ -48,6 +58,19 @@ class App:
     def go(self, scene: Scene) -> None:
         self.scene = scene
         scene.on_enter()
+
+    @staticmethod
+    def _is_fullscreen_key(event: pygame.event.Event) -> bool:
+        if event.key == pygame.K_F11:
+            return True
+        # Cmd+F（macOS）/ Ctrl+F：切换全屏，且不与文本输入冲突
+        if event.key == pygame.K_f and (event.mod & (pygame.KMOD_META | pygame.KMOD_CTRL)):
+            return True
+        return False
+
+    def toggle_fullscreen(self) -> None:
+        self.fullscreen = not self.fullscreen
+        pygame.display.toggle_fullscreen()
 
     def save(self) -> None:
         save_settings(self.settings)
@@ -61,6 +84,11 @@ class App:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
+                elif event.type == pygame.KEYDOWN and self._is_fullscreen_key(event):
+                    self.toggle_fullscreen()
+                elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE \
+                        and self.fullscreen:
+                    self.toggle_fullscreen()
                 elif self.scene is not None:
                     self.scene.handle(event)
             if self.scene is not None:

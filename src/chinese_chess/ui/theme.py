@@ -30,6 +30,7 @@ BLACK_PIECE = (40, 44, 52)
 BLACK_PIECE_DARK = (20, 22, 28)
 PIECE_FACE = (245, 233, 205)     # 棋子圆盘底色
 PIECE_FACE_EDGE = (208, 180, 130)
+PIECE_SHADOW = (176, 148, 104)   # 棋子投影（偏暗木色，不透明，跨后端稳定）
 
 SELECT = (60, 160, 90)           # 选中框
 MOVE_DOT = (60, 150, 90)         # 可走点
@@ -77,6 +78,15 @@ def _resolve_cjk() -> str:
     # 兜底：让 pygame 自选，可能不含中文，但不至于崩溃
     _cjk_font_name = pygame.font.match_font("arial") or pygame.font.get_default_font()
     return _cjk_font_name
+
+
+def draw_veil(surf: pygame.Surface, alpha: int = 140) -> None:
+    """在整屏铺一层半透明黑色遮罩。用表面级 alpha（set_alpha），
+    而非逐像素 alpha 表面——后者在部分显卡/Retina 后端上会被渲染成纯黑块。"""
+    veil = pygame.Surface(surf.get_size())
+    veil.fill((0, 0, 0))
+    veil.set_alpha(alpha)
+    surf.blit(veil, (0, 0))
 
 
 def get_font(size: int, bold: bool = False) -> pygame.font.Font:

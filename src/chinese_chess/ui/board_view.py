@@ -146,10 +146,9 @@ class BoardView:
             self._piece(surf, x, y, radius, anim["piece"])
 
     def _piece(self, surf, x, y, radius, piece, highlight=False):
-        # 阴影
-        shadow = pygame.Surface((radius * 2 + 6, radius * 2 + 6), pygame.SRCALPHA)
-        pygame.draw.circle(shadow, (0, 0, 0, 70), (radius + 3, radius + 5), radius)
-        surf.blit(shadow, (x - radius - 3, y - radius - 3))
+        # 阴影：直接在主表面上画一个偏暗的实心圆（不用带 alpha 通道的临时表面，
+        # 否则在部分显卡/Retina 后端上整块透明矩形会被渲染成黑框）
+        pygame.draw.circle(surf, theme.PIECE_SHADOW, (x + 2, y + 4), radius)
         # 圆盘
         pygame.draw.circle(surf, theme.PIECE_FACE, (x, y), radius)
         pygame.draw.circle(surf, theme.PIECE_FACE_EDGE, (x, y), radius, 2)
@@ -184,9 +183,9 @@ class BoardView:
         if is_capture:
             pygame.draw.circle(surf, theme.MOVE_DOT, (x, y), int(theme.CELL * 0.44), 4)
         else:
-            dot = pygame.Surface((26, 26), pygame.SRCALPHA)
-            pygame.draw.circle(dot, (*theme.MOVE_DOT, 190), (13, 13), 9)
-            surf.blit(dot, (x - 13, y - 13))
+            # 直接画实心圆点，避免带 alpha 的临时表面在某些后端上变黑块
+            pygame.draw.circle(surf, theme.MOVE_DOT, (x, y), 9)
+            pygame.draw.circle(surf, theme.PIECE_FACE, (x, y), 4)
 
 
 def _is_king(piece) -> bool:

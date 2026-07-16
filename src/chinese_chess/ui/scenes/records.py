@@ -120,9 +120,7 @@ class RecordsScene(Scene):
         surf.blit(t, t.get_rect(center=rect.center))
 
     def _draw_confirm(self, surf) -> None:
-        veil = pygame.Surface((theme.WIDTH, theme.HEIGHT), pygame.SRCALPHA)
-        veil.fill((0, 0, 0, 140))
-        surf.blit(veil, (0, 0))
+        theme.draw_veil(surf, 140)
         r = pygame.Rect(theme.WIDTH // 2 - 200, theme.HEIGHT // 2 - 90, 400, 180)
         pygame.draw.rect(surf, theme.PANEL_BG, r, border_radius=16)
         pygame.draw.rect(surf, theme.GOLD, r, width=3, border_radius=16)

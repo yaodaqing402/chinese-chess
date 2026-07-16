@@ -412,9 +412,7 @@ class GameScene(Scene):
             y += line_h
 
     def _draw_end_dialog(self, surf) -> None:
-        veil = pygame.Surface((theme.WIDTH, theme.HEIGHT), pygame.SRCALPHA)
-        veil.fill((0, 0, 0, 140))
-        surf.blit(veil, (0, 0))
+        theme.draw_veil(surf, 140)
         r = self.end_dialog["rect"]
         pygame.draw.rect(surf, theme.PANEL_BG, r, border_radius=20)
         pygame.draw.rect(surf, theme.GOLD, r, width=4, border_radius=20)
