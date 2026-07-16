@@ -1,0 +1,23 @@
+[project]
+name = "chinese-chess"
+version = "1.0.0"
+description = "中国象棋 · 少儿版 —— 适合小朋友的中国象棋游戏（人机 / 双人 / 局域网 / 教学残局）"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pygame>=2.5,<3",
+    "numpy>=1.24",
+]
+
+[project.scripts]
+chinese-chess = "chinese_chess.ui.app:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"

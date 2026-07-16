@@ -1,0 +1,102 @@
+name: Build (Windows & macOS)
+
+# 推送 v* 标签时自动构建 Windows 与 macOS 应用并发布到 Release；也可在网页手动触发。
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2025
+            label: windows
+          - os: macos-latest
+            label: macos
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 安装依赖
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller
+
+      - name: 读取版本号
+        id: ver
+        shell: bash
+        run: echo "v=$(grep -oE '__version__[[:space:]]*=[[:space:]]*\"[^\"]+\"' src/chinese_chess/__init__.py | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')" >> "$GITHUB_OUTPUT"
+
+      - name: PyInstaller 打包
+        shell: bash
+        run: pyinstaller packaging/chinese_chess.spec --clean -y
+
+      - name: 冻结烟测 (macOS) —— 能启动、各界面可构建
+        if: matrix.label == 'macos'
+        shell: bash
+        env:
+          CHINESE_CHESS_SELFTEST: "1"
+          CHINESE_CHESS_SELFTEST_OUT: "selftest.txt"
+          SDL_VIDEODRIVER: "dummy"
+          SDL_AUDIODRIVER: "dummy"
+        run: |
+          "dist/ChineseChess_v${{ steps.ver.outputs.v }}.app/Contents/MacOS/ChineseChess_v${{ steps.ver.outputs.v }}" || true
+          cat selftest.txt
+          grep -q "SELFTEST PASS" selftest.txt
+
+      - name: 冻结烟测 (Windows) —— 能启动、各界面可构建
+        if: matrix.label == 'windows'
+        shell: pwsh
+        env:
+          CHINESE_CHESS_SELFTEST: "1"
+          CHINESE_CHESS_SELFTEST_OUT: "selftest.txt"
+          SDL_VIDEODRIVER: "dummy"
+          SDL_AUDIODRIVER: "dummy"
+        run: |
+          Start-Process -FilePath "dist/ChineseChess_v${{ steps.ver.outputs.v }}/ChineseChess_v${{ steps.ver.outputs.v }}.exe" `
+            -WorkingDirectory $PWD -Wait
+          if (-not (Test-Path selftest.txt)) { Write-Error "selftest.txt 未生成"; exit 1 }
+          Get-Content selftest.txt
+          if (-not (Select-String -Path selftest.txt -Pattern "SELFTEST PASS")) { exit 1 }
+
+      - name: 打包产物 (macOS .app → zip)
+        if: matrix.label == 'macos'
+        shell: bash
+        run: |
+          cd dist
+          ditto -c -k --sequesterRsrc --keepParent \
+            "ChineseChess_v${{ steps.ver.outputs.v }}.app" \
+            "../ChineseChess_v${{ steps.ver.outputs.v }}-macos.zip"
+
+      - name: 打包产物 (Windows 文件夹 → zip)
+        if: matrix.label == 'windows'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "dist/ChineseChess_v${{ steps.ver.outputs.v }}" `
+            -DestinationPath "ChineseChess_v${{ steps.ver.outputs.v }}-windows.zip"
+
+      - name: 上传 Artifact（便于非 tag 构建下载）
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: ChineseChess-${{ matrix.label }}
+          path: "ChineseChess_v${{ steps.ver.outputs.v }}-${{ matrix.label }}.zip"
+
+      - name: 发布到 Release（仅打 tag 时）
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: "ChineseChess_v${{ steps.ver.outputs.v }}-${{ matrix.label }}.zip"

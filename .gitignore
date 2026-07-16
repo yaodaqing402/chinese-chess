@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+
+# PyInstaller
+build/
+dist/
+*.spec.bak
+selftest.txt
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+
+# 本地运行数据（运行时生成于用户目录，不应入库）
+*.log
