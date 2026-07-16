@@ -88,15 +88,26 @@ jobs:
           Compress-Archive -Path "dist/ChineseChess_v${{ steps.ver.outputs.v }}" `
             -DestinationPath "ChineseChess_v${{ steps.ver.outputs.v }}-windows.zip"
 
-      - name: 上传 Artifact（便于非 tag 构建下载）
-        continue-on-error: true
+      - name: 上传构建产物为 Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ChineseChess-${{ matrix.label }}
           path: "ChineseChess_v${{ steps.ver.outputs.v }}-${{ matrix.label }}.zip"
+          if-no-files-found: error
 
-      - name: 发布到 Release（仅打 tag 时）
-        if: startsWith(github.ref, 'refs/tags/v')
+  # 单独的发布任务：等两个平台都构建完，集中下载产物一次性发布，避免多任务并发创建 Release 冲突。
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: 下载全部构建产物
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: 发布到 Release
         uses: softprops/action-gh-release@v2
         with:
-          files: "ChineseChess_v${{ steps.ver.outputs.v }}-${{ matrix.label }}.zip"
+          files: artifacts/**/*.zip
+          fail_on_unmatched_files: true
